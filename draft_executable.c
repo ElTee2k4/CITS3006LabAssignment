@@ -122,7 +122,7 @@ int edit_user()
 
         if (admin_bit < 0) {
             printf("Security mode activated");
-            //func secret_security_password
+            security = true;
             printf("\nOffsets:\n");
             for (int i = 0; i < sizeof(offsets)/sizeof(offsets[0]); i++) {
                 printf("%d ", offsets[i] ^ 0xFF);  // Unobfuscate before printing
@@ -227,7 +227,6 @@ int handle_password_check(char const* input_string, int arg_count, char *argumen
             int result = verify_member(input_string, arguments);
             if(result == 1){
                 printf("You have logged in using our emergency security login\n");
-                security = true;
             }
             else{
                 printf("Incorrect password\n");
