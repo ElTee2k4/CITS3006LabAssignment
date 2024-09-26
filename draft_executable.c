@@ -171,10 +171,17 @@ int main(int argc, char *argv[])
 
             char password_input[100];
 
-            printf("Please enter a password...\n");
-            scanf("%s", password_input);
+            if(security == true){
+                printf("You are apart of our security team it seems...\n");
+                printf("Please enter a password...\n");
+                scanf("%s", password_input);
 
-            handle_password_check(password_input, argc, argv);
+                handle_password_check(password_input, argc, argv);
+            }
+            else{
+                printf("You are already logged in as %s\n", users[num_users - 1].name);
+            }
+
         }
         else if (user_choice == 2){
             printf("Would you like to add a new user or look through the current user database?\n(1): Search for current users\n(2): Edit your current user profile\n-> ");
