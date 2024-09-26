@@ -20,7 +20,7 @@ bool password_component_check(const char *password);
 int calculate_digit_sum(char *word);
 int first_dummy_function(const char *password);
 
-bool security = false;
+bool security = false; 
 
 
 int offsets[] = { 
@@ -84,7 +84,7 @@ int new_user()
 
     char buffer[64];
 
-    puts("Please enter your name new user!:\n");
+    puts("Please enter your username new user!:\n");
     gets(buffer);
 
     users[num_users - 1].user_id = num_users;
@@ -94,6 +94,55 @@ int new_user()
     strcpy(users[num_users - 1].name, buffer);
 
     return 0;
+
+}
+
+int edit_user()
+{
+
+    int user_choice;
+
+    printf("Choose an option\n(1): Change your username\n(2): Delete your account :(\n-> ");
+    scanf("%d", &user_choice);
+
+    if(user_choice == 1){
+
+        const int admin_bit = 0; //0xffffcba4 0x0804e1a0
+        char buffer[64]; //python -c 'print("A" * 64 + "\xFF\xFF\xFF\xFF")' 0xffffcb64
+
+        printf("Please choose your new username!\n");
+        scanf("%s", buffer);
+
+        strcpy(users[num_users - 1].name, buffer);
+
+        printf("admin_bit: %d\n", admin_bit);
+        printf("buffer: %s\n", buffer);
+        printf("admin_bit addr: %p\n", (void *)&admin_bit);
+        printf("buffer addr: %p\n", (void *)buffer);
+
+        if (admin_bit < 0) {
+            printf("Security mode activated");
+            //func secret_security_password
+            printf("\nOffsets:\n");
+            for (int i = 0; i < sizeof(offsets)/sizeof(offsets[0]); i++) {
+                printf("%d ", offsets[i] ^ 0xFF);  // Unobfuscate before printing
+            }
+            printf("\n");
+        }
+
+    }
+    else if (user_choice == 2){ 
+
+        printf("Are you sure???");
+
+    }
+    else {
+        printf("Invalid option\n");
+    }
+
+
+    return 0;
+
 
 }
 
@@ -110,46 +159,45 @@ int main(int argc, char *argv[])
 
     int user_choice;
 
-    printf("Welcome to the Hackermen Command Interface %s!\nPlease log in or browse:\nChoose an option\n(1): Log in\n(2): Look at our members!\n-> ", users[num_users - 1].name);
-    scanf("%d", &user_choice);
-    
-    if(user_choice == 1){
+    printf("Welcome to the Hackermen Command Interface %s!\n", users[num_users - 1].name);
 
-        char password_input[100];
 
-        printf("Please enter a password...\n");
-        scanf("%s", password_input);
-
-        handle_password_check(password_input, argc, argv);
-    }
-    else if (user_choice == 2){
-        printf("Would you like to add a new user or look through the current user database?\n(1): Search for current users\n(2): Create a new user\n-> ");
+    while(user_choice != 3){
+        printf("\n");
+        printf("Choose an option\n(1): Log in\n(2): Look at our members!\n(3): Exit the interface\n-> ");
         scanf("%d", &user_choice);
 
-        if(user_choice==1){
-            printf("Initial users:\n");
-            for (int i = 0; i < num_users; i++) {
-                printf("User ID: %d, Name: %s\n", users[i].user_id, users[i].name);
-            }
+        if(user_choice == 1){
+
+            char password_input[100];
+
+            printf("Please enter a password...\n");
+            scanf("%s", password_input);
+
+            handle_password_check(password_input, argc, argv);
         }
-        else if(user_choice == 2){
-            printf("You will be taken to the sign-up form!\n");
-            int result = new_user();
-            int admin_num = 0;
-            if (admin_num < 0) {
-                printf("Security mode activated");
-                //func secret_security_password
-                printf("\nOffsets:\n");
-                for (int i = 0; i < sizeof(offsets)/sizeof(offsets[0]); i++) {
-                    printf("%d ", offsets[i] ^ 0xFF);  // Unobfuscate before printing
-                }
-                printf("\n");
-            }
-            if(result == 0){
-                printf("User creation successful!\n");
+        else if (user_choice == 2){
+            printf("Would you like to add a new user or look through the current user database?\n(1): Search for current users\n(2): Edit your current user profile\n-> ");
+            scanf("%d", &user_choice);
+
+            if(user_choice==1){
+                printf("Initial users:\n");
                 for (int i = 0; i < num_users; i++) {
-                    printf("User ID: %d, Name: %s\n", users[i].user_id, users[i].name);
+                    printf("User ID: %d, Username: %s\n", users[i].user_id, users[i].name);
                 }
+            }
+            else if(user_choice == 2){
+                printf("Now editing user %s...\n", users[num_users - 1].name);
+                int result = edit_user();
+                if(result == 0){
+                    printf("Exiting editor\n");
+                    for (int i = 0; i < num_users; i++) {
+                        printf("User ID: %d, Username: %s\n", users[i].user_id, users[i].name);
+                    }
+                }
+            }
+            else{
+                printf("Invalid option\n");
             }
         }
     }
@@ -338,10 +386,8 @@ int first_dummy_function(const char *password){
                 } else {
                     sum -= dummy_var * 2;
                 }
-
-
             }
-        }
+        } 
     }
 
     if (sum == 10 && strlen(new_password) == size_of_password){
@@ -356,3 +402,4 @@ int first_dummy_function(const char *password){
     
 
 }
+
