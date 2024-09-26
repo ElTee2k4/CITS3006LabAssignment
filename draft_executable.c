@@ -22,6 +22,41 @@ int first_dummy_function(const char *password);
 
 bool security = false; 
 
+#include <stdio.h>
+#include <stdlib.h>
+
+char* capture_python_output(const char* script_name) {
+    char buffer[128];
+    char *result = NULL;
+    size_t result_len = 0;
+
+    // Open a pipe to the Python script
+    FILE *fp = popen(script_name, "r");
+    if (fp == NULL) {
+        perror("popen failed");
+        return NULL; 
+    }
+
+    // Read the output of the Python script
+    while (fgets(buffer, sizeof(buffer), fp) != NULL) {
+        size_t len = strlen(buffer);
+        char *temp = realloc(result, result_len + len + 1);
+        if (temp == NULL) {
+            free(result);
+            perror("realloc failed");
+            pclose(fp);
+            return NULL;
+        }
+        result = temp;
+        strcpy(result + result_len, buffer);
+        result_len += len;
+    }
+
+    pclose(fp);
+
+    return result;
+}
+
 
 int offsets[] = { 
     (0x74 - 'a') ^ 0xFF, (0x68 - 'a') ^ 0xFF, (0x69 - 'a') ^ 0xFF,
@@ -121,12 +156,19 @@ int edit_user()
         printf("buffer addr: %p\n", (void *)buffer);
 
         if (admin_bit < 0) {
-            printf("Security mode activated");
+            printf("Security mode activated\n");
             security = true;
-            printf("\nOffsets:\n");
-            for (int i = 0; i < sizeof(offsets)/sizeof(offsets[0]); i++) {
-                printf("%d ", offsets[i] ^ 0xFF);  // Unobfuscate before printing
+
+            const char* script_name = "python3 secret.py";
+            char* output = capture_python_output(script_name);
+            if (output != NULL) {
+                // Print the captured output
+                printf("%s", output);
+                free(output); // Free allocated memory
+            } else {
+                printf("Failed to capture output from Python script.\n");
             }
+
             printf("\n");
         }
 
