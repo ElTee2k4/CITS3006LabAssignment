@@ -1,0 +1,17 @@
+Subject: Account Creation Successful
+
+From: bob@hackermen.com
+To: headhackerman@hackermen.com
+Date: September 17, 2024
+Time: 12:31 PM
+
+Yo Head Hackerman,
+
+Im ready to go boss, I just made my security account! I just need your permission
+and then i'm ready to make this system have more layers of security then an onion. I'm hoping to start
+work on the key generation for your encryption schema probably first. We're still using AES for now though
+with the key gen in the code right?
+
+Best regards,
+Bob
+Security Team

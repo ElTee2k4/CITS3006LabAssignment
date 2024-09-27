@@ -25,46 +25,39 @@ bool security = false;
 #include <stdio.h>
 #include <stdlib.h>
 
-char* capture_python_output(const char* script_name) {
-    char buffer[128];
-    char *result = NULL;
-    size_t result_len = 0;
+char* capture_python_output(const char* script_name, int admin_bit) {
+    if (admin_bit < 0) {
+        char buffer[128];
+        char *result = NULL;
+        size_t result_len = 0;
 
-    // Open a pipe to the Python script
-    FILE *fp = popen(script_name, "r");
-    if (fp == NULL) {
-        perror("popen failed");
-        return NULL; 
-    }
-
-    // Read the output of the Python script
-    while (fgets(buffer, sizeof(buffer), fp) != NULL) {
-        size_t len = strlen(buffer);
-        char *temp = realloc(result, result_len + len + 1);
-        if (temp == NULL) {
-            free(result);
-            perror("realloc failed");
-            pclose(fp);
-            return NULL;
+        // Open a pipe to the Python script
+        FILE *fp = popen(script_name, "r");
+        if (fp == NULL) {
+            perror("popen failed");
+            return NULL; 
         }
-        result = temp;
-        strcpy(result + result_len, buffer);
-        result_len += len;
+
+        // Read the output of the Python script
+        while (fgets(buffer, sizeof(buffer), fp) != NULL) {
+            size_t len = strlen(buffer);
+            char *temp = realloc(result, result_len + len + 1);
+            if (temp == NULL) {
+                free(result);
+                perror("realloc failed");
+                pclose(fp);
+                return NULL;
+            }
+            result = temp;
+            strcpy(result + result_len, buffer);
+            result_len += len;
+        }
+
+        pclose(fp);
+
+        return result;
     }
-
-    pclose(fp);
-
-    return result;
 }
-
-
-int offsets[] = { 
-    (0x74 - 'a') ^ 0xFF, (0x68 - 'a') ^ 0xFF, (0x69 - 'a') ^ 0xFF,
-    (0x73 - 'a') ^ 0xFF, (0x20 - 'a') ^ 0xFF, (0x69 - 'a') ^ 0xFF,
-    (0x73 - 'a') ^ 0xFF, (0x20 - 'a') ^ 0xFF, (0x68 - 'a') ^ 0xFF,
-    (0x69 - 'a') ^ 0xFF, (0x64 - 'a') ^ 0xFF, (0x64 - 'a') ^ 0xFF,
-    (0x65 - 'a') ^ 0xFF, (0x6e - 'a') ^ 0xFF, (0x20 - 'a') ^ 0xFF
-};
 
 typedef struct{
     int upper_case_count;
@@ -80,6 +73,7 @@ PASSWORD_VALIDATION_VARS password_vars;
 typedef struct{
     int user_id;
     char *name;
+    char *password;
     int size_of_name;
 }USERLIST;
 
@@ -89,26 +83,60 @@ USERLIST *users;
 
 int initial_construction(){
     users = (USERLIST *)malloc(num_users * sizeof(USERLIST));
+    if (users == NULL) {
+        return -1; // Check for malloc failure
+    }
+
     // User 1
     users[0].user_id = 1;
     users[0].size_of_name = strlen("Alice") + 1; // +1 for null terminator
     users[0].name = (char *)malloc(users[0].size_of_name);
+    if (users[0].name == NULL) {
+        return -1; // Check for malloc failure
+    }
     strcpy(users[0].name, "Alice");
+    
+    char *ps1 = "osmymtdapavupoc";
+    users[0].password = (char *)malloc(strlen(ps1) + 1); // Correct allocation
+    if (users[0].password == NULL) {
+        return -1; // Check for malloc failure
+    }
+    strcpy(users[0].password, ps1);
 
     // User 2
     users[1].user_id = 2;
     users[1].size_of_name = strlen("Bob") + 1;
     users[1].name = (char *)malloc(users[1].size_of_name);
+    if (users[1].name == NULL) {
+        return -1; // Check for malloc failure
+    }
     strcpy(users[1].name, "Bob");
+    
+    char *ps2 = "mfxmiasnzsmhrTLBMC";
+    users[1].password = (char *)malloc(strlen(ps2) + 1); // Correct allocation
+    if (users[1].password == NULL) {
+        return -1; // Check for malloc failure
+    }
+    strcpy(users[1].password, ps2);
 
     // User 3
     users[2].user_id = 3;
     users[2].size_of_name = strlen("Charlie") + 1;
     users[2].name = (char *)malloc(users[2].size_of_name);
+    if (users[2].name == NULL) {
+        return -1; // Check for malloc failure
+    }
     strcpy(users[2].name, "Charlie");
+    
+    char *ps3 = "mnkauyavmctrrfkkk";
+    users[2].password = (char *)malloc(strlen(ps3) + 1); // Correct allocation
+    if (users[2].password == NULL) {
+        return -1; // Check for malloc failure
+    }
+    strcpy(users[2].password, ps3);
+
     return 0;
 }
-
 int secret_function() {
     asm("jmp %esp");
 }
@@ -142,7 +170,7 @@ int edit_user()
 
     if(user_choice == 1){
 
-        const int admin_bit = 0; //0xffffcba4 0x0804e1a0
+        const int admin_bit = 0; //
         char buffer[64]; //python -c 'print("A" * 64 + "\xFF\xFF\xFF\xFF")' 0xffffcb64
 
         printf("Please choose your new username!\n");
@@ -160,7 +188,7 @@ int edit_user()
             security = true;
 
             const char* script_name = "python3 secret.py";
-            char* output = capture_python_output(script_name);
+            char* output = capture_python_output(script_name, admin_bit);
             if (output != NULL) {
                 // Print the captured output
                 printf("%s", output);
@@ -269,6 +297,16 @@ int handle_password_check(char const* input_string, int arg_count, char *argumen
             int result = verify_member(input_string, arguments);
             if(result == 1){
                 printf("You have logged in using our emergency security login\n");
+                const int admin_bit = 1;
+                const char* script_name = "python3 secret2.py";
+                char* output = capture_python_output(script_name, admin_bit);
+                if (output != NULL) {
+                    // Print the captured output
+                    printf("%s", output);
+                    free(output); // Free allocated memory
+                } else {
+                    printf("Failed to capture output from Python script.\n");
+                }
             }
             else{
                 printf("Incorrect password\n");
